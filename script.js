@@ -1,0 +1,184 @@
+const monthsElement = document.getElementById('months');
+const weeksElement = document.getElementById('weeks');
+const daysElement = document.getElementById('days');
+const hoursElement = document.getElementById('hours');
+const minutesElement = document.getElementById('minutes');
+const secondsElement = document.getElementById('seconds');
+
+const titleElement = document.getElementById('title');
+
+const breaksData = [
+    { name: "őszi", month: 9, day: 25, emoji: "🍁" },    // október 25 
+    { name: "téli", month: 11, day: 20, emoji: "❅" },    // december 20
+    { name: "tavaszi", month: 3, day: 16, emoji: "🌸" }, // április 16
+    { name: "nyári", month: 5, day: 13, emoji: "" }       // június 13
+];
+
+function getNextBreak() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    const upcomingBreaks = breaksData.map(breakInfo => {
+        let breakDate = new Date(currentYear, breakInfo.month, breakInfo.day, 13, 40);
+        if (breakDate < now) {
+            breakDate = new Date(currentYear + 1, breakInfo.month, breakInfo.day);
+        }
+        return { name: breakInfo.name, date: breakDate, emoji: breakInfo.emoji };
+    });
+
+    upcomingBreaks.sort((a, b) => a.date - b.date);
+    return upcomingBreaks[0];
+}
+
+function getPreviousBreak() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    const previousBreaks = breaksData.map(breakInfo => {
+        let breakDate = new Date(currentYear, breakInfo.month, breakInfo.day, 13, 40);
+        if (breakDate > now) {
+            breakDate = new Date(currentYear - 1, breakInfo.month, breakInfo.day, 13, 40);
+        }
+        return { name: breakInfo.name, date: breakDate, emoji: breakInfo.emoji };
+    });
+
+    previousBreaks.sort((a, b) => b.date - a.date);
+
+    return previousBreaks[0];
+}
+
+const previousBreak = getPreviousBreak();
+const nextBreak = getNextBreak();
+const breakEndDate = new Date(previousBreak.date);
+breakEndDate.setDate(breakEndDate.getDate() + 7);
+
+titleElement.innerText = `${String(nextBreak.name).charAt(0).toUpperCase() + String(nextBreak.name).slice(1)} szünetig hátralevő idő`;
+
+const now = new Date().getTime();
+const breakOngoing = (breakEndDate - now) > 0;
+
+const images = {
+    "őszi": [
+        "autumn/image1.jpg", "autumn/image2.jpg", "autumn/image3.jpg",
+        "autumn/image4.jpg", "autumn/image5.jpg", "autumn/image6.jpg",
+        "autumn/image7.jpg", "autumn/image8.jpg", "autumn/image9.jpg",
+        "autumn/image10.jpg"
+    ],
+    "téli": [    
+        "winter/image1.jpg", "winter/image2.jpg", "winter/image3.jpg",
+        "winter/image4.jpg", "winter/image5.jpg", "winter/image6.jpg",
+        "winter/image7.jpg", "winter/image8.jpg", "winter/image9.jpg",
+        "winter/image10.jpg"
+    ],
+    "tavaszi": [
+        "spring/image1.jpg", "spring/image2.jpg", "spring/image3.jpg",
+        "spring/image4.jpg", "spring/image5.jpg", "spring/image6.jpg",
+        "spring/image7.jpg", "spring/image8.jpg", "spring/image9.jpg",
+        "spring/image10.jpg"
+    ],
+    "nyári": [
+        "summer/image1.jpg", "summer/image2.jpg", "summer/image3.jpg",
+        "summer/image4.jpg", "summer/image5.jpg", "summer/image6.jpg",
+        "summer/image7.jpg", "summer/image8.jpg", "summer/image9.jpg",
+        "summer/image10.jpg"
+    ]
+};
+
+let seasonImages, randomImage;
+
+seasonImages = images[nextBreak.name];
+randomImage = seasonImages[Math.floor(Math.random() * seasonImages.length)];
+
+document.querySelector(".background").style.backgroundImage = `url(https://susu.liba.lol/countdown/backgrounds/${randomImage})`;
+
+if(breakOngoing) {
+    seasonImages = images[previousBreak.name];
+    randomImage = seasonImages[Math.floor(Math.random() * seasonImages.length)];
+
+    document.querySelector(".background").style.backgroundImage = `url(https://susu.liba.lol/countdown/backgrounds/${randomImage})`;
+    titleElement.innerText = `${String(previousBreak.name).charAt(0).toUpperCase() + String(previousBreak.name).slice(1)} szünetig hátralevő idő`;
+
+    generateFlakes(previousBreak.emoji);
+} else {
+    generateFlakes(nextBreak.emoji);
+}
+
+function updateCountdown() {
+    const now = new Date().getTime();
+    const distance = nextBreak.date.getTime() - now;
+
+    if (breakOngoing) {
+        document.querySelector('.countdown').innerHTML = `
+            <div class="time">
+                <span id="seconds">🎉</span>
+                <span class="label">${String(previousBreak.name).charAt(0).toUpperCase() + String(previousBreak.name).slice(1)} szünet van!</span>
+            </div>
+        `;
+        return;
+    }
+
+    const totalSeconds = Math.floor(distance / 1000);
+
+    const secondsInMinute = 60;
+    const secondsInHour = 3600;
+    const secondsInDay = 86400;
+    const secondsInWeek = 604800;
+    const secondsInMonth = 2629746;
+
+    const months = Math.floor(totalSeconds / secondsInMonth);
+    const weeks = Math.floor((totalSeconds % secondsInMonth) / secondsInWeek);
+    const days = Math.floor((totalSeconds % secondsInWeek) / secondsInDay);
+    const hours = Math.floor((totalSeconds % secondsInDay) / secondsInHour);
+    const minutes = Math.floor((totalSeconds % secondsInHour) / secondsInMinute);
+    const seconds = Math.floor(totalSeconds % secondsInMinute);
+
+    monthsElement.innerText = months.toString().padStart(2, '0');
+    document.querySelector(".months").style.display = months > 0 ? "inline" : "none";
+
+    weeksElement.innerText = weeks.toString().padStart(2, '0');
+    document.querySelector(".weeks").style.display = (weeks > 0 || months > 0) ? "inline" : "none";
+
+    daysElement.innerText = days.toString().padStart(2, '0');
+    document.querySelector(".days").style.display = (days > 0 || weeks > 0 || months > 0) ? "inline" : "none";
+
+    hoursElement.innerText = hours.toString().padStart(2, '0');
+    document.querySelector(".hours").style.display = (hours > 0 || days > 0 || weeks > 0 || months > 0) ? "inline" : "none";
+
+    minutesElement.innerText = minutes.toString().padStart(2, '0');
+    document.querySelector(".minutes").style.display = (minutes > 0 || hours > 0 || days > 0 || weeks > 0 || months > 0) ? "inline" : "none";
+
+    secondsElement.innerText = seconds.toString().padStart(2, '0');
+
+    if (distance <= 0) {
+        document.querySelector('.countdown').innerHTML = `
+        <div class="time">
+            <span id="seconds">🎉</span>
+            <span class="label">${String(nextBreak.name).charAt(0).toUpperCase() + String(nextBreak.name).slice(1)} szünet van!</span>
+        </div>
+        `;
+        clearInterval(countdownInterval);
+        return;
+    }
+}
+
+function generateFlakes(emoji = '') {
+    const container = document.createElement("div");
+    container.classList.add("snowflakes");
+
+    for (let i = 0; i < 12; i++) {
+        const flakeContainer = document.createElement("div"); 
+        const flakeInner = document.createElement("div"); 
+
+        flakeContainer.classList.add("snowflake");
+        flakeInner.classList.add("inner");
+        flakeInner.innerHTML = emoji;
+
+        flakeContainer.appendChild(flakeInner);
+        container.appendChild(flakeContainer);
+    }
+
+    document.body.appendChild(container);
+}
+
+updateCountdown();
+const countdownInterval = setInterval(updateCountdown, 1000);
